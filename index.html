@@ -448,3 +448,160 @@ iniciarDashboard();
   }
 })();
 </script>
+<style>
+  /* Tipografía general más fina y elegante */
+  body,
+  button,
+  select,
+  input,
+  textarea {
+    font-family: "Aptos", "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.01em;
+  }
+
+  /* Títulos principales */
+  h1 {
+    font-size: clamp(28px, 3vw, 42px) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.035em !important;
+    line-height: 1.08 !important;
+  }
+
+  h2 {
+    font-size: clamp(22px, 2.2vw, 30px) !important;
+    font-weight: 550 !important;
+    letter-spacing: -0.025em !important;
+  }
+
+  h3 {
+    font-size: clamp(17px, 1.5vw, 22px) !important;
+    font-weight: 520 !important;
+    letter-spacing: -0.015em !important;
+  }
+
+  h4 {
+    font-size: 15px !important;
+    font-weight: 500 !important;
+  }
+
+  /* Texto descriptivo */
+  p,
+  .subtitle,
+  .subtext,
+  .description,
+  small {
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 1.45 !important;
+  }
+
+  /* Tarjetas y labels */
+  .card,
+  .kpi-card,
+  section,
+  article {
+    font-weight: 400 !important;
+  }
+
+  .card-title,
+  .kpi-title,
+  .label,
+  .metric-label {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.005em !important;
+  }
+
+  /* Valores principales: destacados, pero no pesados */
+  .kpi-value,
+  .metric-value,
+  .value,
+  .big-number,
+  .score,
+  .number {
+    font-weight: 600 !important;
+    letter-spacing: -0.025em !important;
+  }
+
+  /* Botones/filtros más livianos */
+  select,
+  button {
+    font-size: 13px !important;
+    font-weight: 400 !important;
+  }
+
+  /* Estado del CLI: blanco, legible, pero sin negrita extrema */
+  .badge,
+  .pill,
+  .status,
+  .estado,
+  .chip {
+    font-weight: 500 !important;
+  }
+</style>
+
+<script>
+(function suavizarTipografiaDashboard() {
+  function normalizar(texto) {
+    return String(texto || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function aplicarTipografiaFina() {
+    document.querySelectorAll("*").forEach(el => {
+      const txt = normalizar(el.textContent);
+
+      // Evitar negritas excesivas aplicadas por scripts anteriores
+      const computedWeight = window.getComputedStyle(el).fontWeight;
+      const numericWeight = Number(computedWeight);
+
+      if (numericWeight >= 700) {
+        if (
+          el.matches("h1") ||
+          el.matches("h2") ||
+          el.matches("h3") ||
+          el.classList.contains("kpi-value") ||
+          el.classList.contains("metric-value") ||
+          el.classList.contains("value")
+        ) {
+          el.style.fontWeight = "600";
+        } else {
+          el.style.fontWeight = "400";
+        }
+      }
+
+      // Estado del CLI: mantener blanco dentro del recuadro rojo, pero más fino
+      if (txt === "critico" || txt === "crítico") {
+        el.style.color = "#ffffff";
+        el.style.fontWeight = "500";
+
+        const badge = el.closest("span, div, strong, b") || el;
+        badge.style.color = "#ffffff";
+        badge.style.fontWeight = "500";
+      }
+    });
+  }
+
+  setTimeout(aplicarTipografiaFina, 300);
+  setTimeout(aplicarTipografiaFina, 1000);
+  setTimeout(aplicarTipografiaFina, 2000);
+
+  if (typeof window.update === "function" && !window.__tipografiaFinaInterceptada) {
+    window.__tipografiaFinaInterceptada = true;
+
+    const updateOriginal = window.update;
+
+    window.update = function() {
+      const resultado = updateOriginal.apply(this, arguments);
+      setTimeout(aplicarTipografiaFina, 100);
+      setTimeout(aplicarTipografiaFina, 500);
+      return resultado;
+    };
+  }
+})();
+</script>
