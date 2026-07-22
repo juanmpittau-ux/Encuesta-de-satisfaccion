@@ -188,3 +188,263 @@ function setText(id,val){document.getElementById(id).textContent=fmt(val)}
 function update(){populateMonths(); const list=filteredMonths(); const x=aggregate(list); setText('kpiSat',x.satisfaccionGeneral); setText('kpiRec',x.recomendacion); setText('kpiBi',x.brandImportance); setText('kpiBr',x.brandRetention); setText('kpiCli',x.cli); document.getElementById('selectedSubtitle').textContent=`${list.length===1?list[0]:'Acumulado seleccionado'} | ${x.responses} respuestas`; charts.selectedRadar.data.datasets[0].data=[x.satisfaccionGeneral,x.recomendacion,x.brandImportance,x.brandRetention,x.cli]; charts.selectedRadar.update(); charts.cliGauge.data.datasets[0].data=[x.cli,Math.max(0,100-x.cli)]; charts.cliGauge.options.plugins.centerTextPlugin.text=fmt(x.cli); charts.cliGauge.update(); charts.nps.data.datasets[0].data=[x.promoters,x.passives,x.detractors]; charts.nps.update(); charts.attributes.data.datasets[0].data=x.attributes; charts.attributes.update(); charts.channel.data.datasets[0].data=x.channels; charts.channel.update(); charts.offer.data.datasets[0].data=x.offer; charts.offer.update(); updateCommercialInsights(list,x); const trend=list; charts.monthlyTrend.data.labels=trend; charts.monthlyTrend.data.datasets[0].data=trend.map(m=>data.monthly[m].satisfaccionGeneral); charts.monthlyTrend.data.datasets[1].data=trend.map(m=>data.monthly[m].recomendacion); charts.monthlyTrend.data.datasets[2].data=trend.map(m=>data.monthly[m].brandImportance); charts.monthlyTrend.data.datasets[3].data=trend.map(m=>data.monthly[m].brandRetention); charts.monthlyTrend.data.datasets[4].data=trend.map(m=>data.monthly[m].cli); charts.monthlyTrend.update(); charts.responses.data.labels=trend; charts.responses.data.datasets[0].data=trend.map(m=>data.monthly[m].responses); charts.responses.update(); document.getElementById('summaryRows').innerHTML=trend.map(m=>{let z=data.monthly[m]; return `<tr><td>${m}</td><td>${fmt(z.satisfaccionGeneral)}</td><td>${fmt(z.recomendacion)}</td><td>${fmt(z.brandImportance)}</td><td>${fmt(z.brandRetention)}</td><td><strong>${fmt(z.cli)}</strong></td></tr>`;}).join('');}
 iniciarDashboard();
 </script></body></html>
+<script>
+(function aplicarCambiosVisualesFinales() {
+  const NUEVO_SUBTITULO =
+    "El Customer Loyalty Index (CLI) se compone de satisfacción general, recomendación de marca, importancia de marca y retencion de marca.";
+
+  function normalizar(texto) {
+    return String(texto || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function cambiarTextoDebajoDelTitulo() {
+    const h1 = Array.from(document.querySelectorAll("h1"))
+      .find(el => normalizar(el.textContent).includes("customer loyalty index") || normalizar(el.textContent).includes("dashboard"));
+
+    if (!h1) return;
+
+    const contenedor = h1.closest("header, section, .hero, .header, .top, div") || h1.parentElement;
+
+    if (!contenedor) return;
+
+    const candidatos = Array.from(contenedor.querySelectorAll("p, span, div"))
+      .filter(el => {
+        const t = normalizar(el.textContent);
+        return (
+          t.includes("lectura") ||
+          t.includes("dashboard") ||
+          t.includes("cli") ||
+          t.includes("satisfaccion") ||
+          t.includes("brand")
+        );
+      });
+
+    if (candidatos.length) {
+      candidatos[0].textContent = NUEVO_SUBTITULO;
+    }
+  }
+
+  function eliminarSubtextoSatisfaccionYRecomendacion() {
+    const textosAEliminar = [
+      "escala asimetrica",
+      "escala 0-100",
+      "escala 0 a 100",
+      "distribucion de 0 a 10",
+      "distribución de 0 a 10",
+      "promedio escala",
+      "lectura de escala",
+      "conversion"
+    ];
+
+    Array.from(document.querySelectorAll("p, small, span, div")).forEach(el => {
+      if (el.children.length > 0) return;
+
+      const txt = normalizar(el.textContent);
+
+      const esDescripcion =
+        textosAEliminar.some(patron => txt.includes(patron)) &&
+        (
+          txt.includes("satisfaccion") ||
+          txt.includes("recomendacion") ||
+          txt.includes("satisfacción") ||
+          txt.includes("recomendación")
+        );
+
+      if (esDescripcion) {
+        el.textContent = "";
+        el.style.display = "none";
+      }
+    });
+  }
+
+  function corregirEstadoCLI() {
+    Array.from(document.querySelectorAll("*")).forEach(el => {
+      const txt = normalizar(el.textContent);
+
+      if (
+        txt === "critico" ||
+        txt === "crítico" ||
+        txt.includes("estado del cli")
+      ) {
+        const posibleBadge = el.closest("span, div, strong, b") || el;
+
+        posibleBadge.style.color = "#ffffff";
+        posibleBadge.style.fontWeight = "800";
+
+        if (
+          posibleBadge.style.backgroundColor ||
+          posibleBadge.className ||
+          txt === "critico" ||
+          txt === "crítico"
+        ) {
+          posibleBadge.style.color = "#ffffff";
+        }
+      }
+    });
+
+    Array.from(document.querySelectorAll("span, div, strong, b")).forEach(el => {
+      const txt = normalizar(el.textContent);
+
+      if (txt === "critico" || txt === "crítico") {
+        el.style.color = "#ffffff";
+        el.style.fontWeight = "800";
+      }
+    });
+  }
+
+  function cambiarGaugeCLI() {
+    Array.from(document.querySelectorAll("h1, h2, h3, h4, p, span, div")).forEach(el => {
+      if (el.children.length > 0) return;
+
+      const txt = normalizar(el.textContent);
+
+      if (txt === "gauge cli") {
+        el.textContent = "CLI";
+      }
+    });
+  }
+
+  function obtenerCharts() {
+    if (!window.Chart) return [];
+
+    if (Chart.instances) {
+      if (typeof Chart.instances.forEach === "function") {
+        const charts = [];
+        Chart.instances.forEach(chart => charts.push(chart));
+        return charts;
+      }
+
+      return Object.values(Chart.instances);
+    }
+
+    const canvases = Array.from(document.querySelectorAll("canvas"));
+
+    return canvases
+      .map(canvas => {
+        try {
+          return Chart.getChart ? Chart.getChart(canvas) : null;
+        } catch (e) {
+          return null;
+        }
+      })
+      .filter(Boolean);
+  }
+
+  function convertirAPorcentajes(valores) {
+    const numeros = valores.map(v => Number(v) || 0);
+    const total = numeros.reduce((acc, v) => acc + v, 0);
+
+    if (!total) return numeros;
+
+    return numeros.map(v => Math.round((v / total) * 1000) / 10);
+  }
+
+  function formatearPorcentaje(valor) {
+    const n = Number(valor);
+
+    if (!Number.isFinite(n)) return valor;
+
+    return `${Math.round(n * 10) / 10}%`;
+  }
+
+  function convertirGraficosCanalYOfertaAPorcentaje() {
+    const charts = obtenerCharts();
+
+    charts.forEach(chart => {
+      if (!chart || !chart.canvas || !chart.data || !chart.data.datasets) return;
+
+      const contenedor = chart.canvas.closest(".card, section, article, div") || chart.canvas.parentElement;
+      const texto = normalizar(contenedor ? contenedor.textContent : "");
+
+      const esCanal =
+        texto.includes("canal por el cual conocio") ||
+        texto.includes("canal por el cual conoció") ||
+        texto.includes("canal");
+
+      const esOferta =
+        texto.includes("oferta de financiamiento") ||
+        texto.includes("oferta del financiamiento") ||
+        texto.includes("financiamiento");
+
+      if (!esCanal && !esOferta) return;
+
+      chart.data.datasets.forEach(ds => {
+        if (!Array.isArray(ds.data)) return;
+
+        if (!ds.__valoresOriginalesConteo) {
+          ds.__valoresOriginalesConteo = ds.data.map(v => Number(v) || 0);
+        }
+
+        ds.data = convertirAPorcentajes(ds.__valoresOriginalesConteo);
+      });
+
+      chart.options.plugins = chart.options.plugins || {};
+      chart.options.plugins.tooltip = chart.options.plugins.tooltip || {};
+      chart.options.plugins.tooltip.callbacks = chart.options.plugins.tooltip.callbacks || {};
+
+      chart.options.plugins.tooltip.callbacks.label = function(ctx) {
+        const label = ctx.label || ctx.dataset.label || "";
+        const raw = typeof ctx.raw === "number" ? ctx.raw : ctx.parsed;
+        return `${label}: ${formatearPorcentaje(raw)}`;
+      };
+
+      if (chart.options.scales) {
+        Object.keys(chart.options.scales).forEach(scaleKey => {
+          const scale = chart.options.scales[scaleKey];
+
+          if (!scale.ticks) scale.ticks = {};
+
+          scale.ticks.callback = function(value) {
+            return formatearPorcentaje(value);
+          };
+        });
+      }
+
+      chart.update();
+    });
+  }
+
+  function aplicarTodo() {
+    cambiarTextoDebajoDelTitulo();
+    eliminarSubtextoSatisfaccionYRecomendacion();
+    corregirEstadoCLI();
+    cambiarGaugeCLI();
+    convertirGraficosCanalYOfertaAPorcentaje();
+  }
+
+  setTimeout(aplicarTodo, 300);
+  setTimeout(aplicarTodo, 1000);
+  setTimeout(aplicarTodo, 2000);
+
+  if (typeof window.update === "function" && !window.__updateDisenoInterceptado) {
+    window.__updateDisenoInterceptado = true;
+
+    const updateOriginal = window.update;
+
+    window.update = function() {
+      const resultado = updateOriginal.apply(this, arguments);
+      setTimeout(aplicarTodo, 100);
+      setTimeout(aplicarTodo, 500);
+      return resultado;
+    };
+  }
+
+  if (typeof window.cargarDatosOnline === "function" && !window.__cargarDatosOnlineDisenoInterceptado) {
+    window.__cargarDatosOnlineDisenoInterceptado = true;
+
+    const cargarOriginal = window.cargarDatosOnline;
+
+    window.cargarDatosOnline = async function() {
+      const resultado = await cargarOriginal.apply(this, arguments);
+      setTimeout(aplicarTodo, 100);
+      setTimeout(aplicarTodo, 500);
+      return resultado;
+    };
+  }
+})();
+</script>
