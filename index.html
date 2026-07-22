@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Customer Loyalty Index</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --bg:#eef2f5;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#667085;
+      --soft:#e5e7eb;
+      --line:#d9dee6;
+      --teal:#0097a7;
+      --tealDark:#007c89;
+      --orange:#f59e0b;
+      --green:#16a34a;
+      --red:#dc2626;
+      --blue:#6366f1;
+      --shadow:0 18px 45px rgba(15,23,42,.08);
+      --radius:28px;
+    }
+
+    *{box-sizing:border-box;}
+
+    html,body{
+      margin:0;
+      padding:0;
+      min-height:100%;
+      background:radial-gradient(circle at top left,#ffffff 0,var(--bg) 42%,#e6edf2 100%);
+      color:var(--ink);
+      font-family:"Aptos","Segoe UI","Inter","Helvetica Neue",Arial,sans-serif;
+      font-weight:400;
+      letter-spacing:-.01em;
+    }
+
+    .page{
+      width:min(1400px,calc(100% - 44px));
+      margin:0 auto;
+      padding:34px 0 50px;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:28px;
+      align-items:center;
+      margin-bottom:28px;
+    }
+
+    .hero h1{
+      margin:0;
+      color:var(--ink);
+      font-size:clamp(32px,4vw,56px);
+      line-height:1.02;
+      font-weight:600;
+      letter-spacing:-.045em;
+    }
+
+    .hero p{
+      margin:14px 0 0;
+      max-width:880px;
+      color:var(--muted);
+      font-size:16px;
+      line-height:1.45;
+      font-weight:400;
+    }
+
+    .filters{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      background:rgba(255,255,255,.74);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:10px;
+      box-shadow:var(--shadow);
+    }
+
+    .filters select{
+      border:0;
+      outline:0;
+      background:#fff;
+      color:var(--ink);
+      padding:12px 18px;
+      border-radius:999px;
+      font-size:14px;
+      font-weight:400;
+      min-width:128px;
+      box-shadow:inset 0 0 0 1px var(--line);
+    }
+
+    .status-line{
+      margin:0 0 20px;
+      color:var(--muted);
+      font-size:14px;
+      font-weight:400;
+    }
+
+    .loading{
+      display:none;
+      margin-bottom:16px;
+      padding:12px 16px;
+      border-radius:16px;
+      background:#fff7ed;
+      color:#9a3412;
+      border:1px solid #fed7aa;
+      font-size:14px;
+    }
+
+    .kpi-grid{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(180px,1fr));
+      gap:26px;
+      margin-bottom:36px;
+    }
+
+    .kpi{
+      min-height:230px;
+      background:rgba(255,255,255,.90);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:22px 30px;
+      box-shadow:var(--shadow);
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      color:var(--ink);
+    }
+
+    .kpi.highlight{
+      background:linear-gradient(180deg,#008b99 0%,#00a7b5 100%);
+      color:#fff !important;
+      border-color:transparent;
+    }
+
+    .kpi.highlight *{color:#fff !important;}
+
+    .kpi-label{
+      min-height:54px;
+      color:var(--muted);
+      font-size:20px;
+      line-height:1.28;
+      text-transform:uppercase;
+      letter-spacing:.015em;
+      font-weight:400;
+    }
+
+    .kpi.highlight .kpi-label{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:8px;
+    }
+
+    .pill-main{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 16px;
+      border-radius:999px;
+      background:#fff;
+      color:var(--tealDark) !important;
+      font-size:13px;
+      font-weight:600;
+      letter-spacing:.04em;
+      white-space:nowrap;
+    }
+
+    .kpi-value{
+      margin-top:18px;
+      color:var(--tealDark);
+      font-size:clamp(42px,4.4vw,58px);
+      line-height:1;
+      font-weight:600;
+      letter-spacing:-.055em;
+    }
+
+    .kpi.highlight .kpi-value{font-size:clamp(54px,5vw,76px);}
+
+    .kpi-desc{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:18px;
+      line-height:1.45;
+      font-weight:400;
+    }
+
+    .dashboard-grid{
+      display:grid;
+      grid-template-columns:1.2fr 1fr;
+      gap:28px;
+      margin-bottom:28px;
+    }
+
+    .panel,.exec-panel{
+      background:rgba(255,255,255,.92);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:32px;
+      color:var(--ink) !important;
+    }
+
+    .panel h2,.exec-panel h2{
+      margin:0 0 18px;
+      color:var(--ink) !important;
+      font-size:22px;
+      font-weight:500;
+      letter-spacing:-.02em;
+    }
+
+    .panel p,.exec-panel > p{
+      margin:0 0 20px;
+      color:var(--muted) !important;
+      font-size:16px;
+      line-height:1.45;
+      font-weight:400;
+    }
+
+    .chart-wrap{height:330px;position:relative;}
+    .chart-wrap.small{height:270px;}
+
+    .exec-grid{
+      display:grid;
+      grid-template-columns:1.25fr 1fr;
+      gap:28px;
+      margin-bottom:28px;
+    }
+
+    #recomendaciones,
+    #recomendaciones .exec-panel,
+    #recomendaciones .exec-panel h2,
+    #recomendaciones .exec-panel h3,
+    #recomendaciones .exec-panel p,
+    #recomendaciones .exec-panel strong,
+    #recomendaciones .exec-panel span,
+    #recomendaciones .exec-panel div,
+    #recomendaciones .insight-card,
+    #recomendaciones .insight-card strong,
+    #recomendaciones .insight-card span,
+    #recomendaciones .insight-card p,
+    #recomendaciones .driver-row,
+    #recomendaciones .driver-value{
+      color:var(--ink) !important;
+    }
+
+    .insight-cards{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:20px;
+    }
+
+    .insight-card{
+      min-height:214px;
+      border:1px solid var(--line);
+      background:#f8fafc;
+      border-radius:22px;
+      padding:20px 22px;
+      color:var(--ink) !important;
+    }
+
+    .insight-card strong{
+      display:block;
+      margin-bottom:14px;
+      color:var(--ink) !important;
+      font-size:17px;
+      font-weight:500;
+      letter-spacing:-.01em;
+    }
+
+    .insight-card span,.insight-card p{
+      color:var(--ink) !important;
+      font-size:17px;
+      line-height:1.5;
+      font-weight:400;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:16px;
+      line-height:1.1;
+      font-weight:500;
+      color:var(--ink) !important;
+      margin-right:8px;
+    }
+
+    .badge.orange{background:var(--orange);color:var(--ink) !important;}
+    .badge.green{background:var(--green);color:#073b16 !important;}
+    .badge.red{background:var(--red);color:#fff !important;}
+    .badge.neutral{background:#e5e7eb;color:var(--ink) !important;}
+
+    .action-box{
+      margin-top:22px;
+      padding:22px 24px;
+      border-radius:22px;
+      background:#f8fafc;
+      border:1px solid var(--line);
+      color:var(--ink) !important;
+    }
+
+    .action-box h3{
+      margin:0 0 10px;
+      color:var(--ink) !important;
+      font-size:18px;
+      font-weight:500;
+    }
+
+    .action-box p{
+      margin:0;
+      color:var(--ink) !important;
+      font-size:16px;
+      line-height:1.5;
+      font-weight:400;
+    }
+
+    .driver-bars{display:grid;gap:17px;margin-top:18px;}
+
+    .driver-row{
+      display:grid;
+      grid-template-columns:160px 1fr 64px;
+      gap:16px;
+      align-items:center;
+      color:var(--ink) !important;
+      font-size:15px;
+      font-weight:400;
+    }
+
+    .bar-track{
+      height:15px;
+      background:#e4e8ee;
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .bar-fill{
+      height:100%;
+      border-radius:999px;
+      background:var(--teal);
+      width:0%;
+    }
+
+    .bar-fill.lowest{background:var(--blue);}
+
+    .driver-value{
+      color:var(--ink) !important;
+      font-weight:500;
+      text-align:right;
+    }
+
+    .bottom-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:28px;
+      margin-bottom:28px;
+    }
+
+    .table-panel{overflow-x:auto;}
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      color:var(--ink);
+      font-size:14px;
+    }
+
+    th,td{
+      padding:12px 10px;
+      border-bottom:1px solid var(--line);
+      text-align:right;
+      white-space:nowrap;
+      font-weight:400;
+    }
+
+    th:first-child,td:first-child{text-align:left;}
+    th{color:var(--muted);font-weight:500;}
+
+    @media (max-width:1150px){
+      .kpi-grid,.bottom-grid{grid-template-columns:repeat(2,1fr);}
+      .dashboard-grid,.exec-grid{grid-template-columns:1fr;}
+    }
+
+    @media (max-width:720px){
+      .page{width:min(100% - 24px,1400px);padding-top:20px;}
+      .hero{grid-template-columns:1fr;}
+      .filters{width:100%;justify-content:space-between;}
+      .filters select{min-width:0;width:100%;}
+      .kpi-grid,.bottom-grid,.insight-cards{grid-template-columns:1fr;}
+      .driver-row{grid-template-columns:1fr;gap:8px;}
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <h1>Customer Loyalty Index</h1>
+        <p>El Customer Loyalty Index (CLI) se compone de satisfacción general, recomendación de marca, importancia de marca y retencion de marca.</p>
+      </div>
+
+      <div class="filters">
+        <select id="yearFilter" aria-label="Filtro de año"><option value="ALL">Todos los años</option></select>
+        <select id="monthFilter" aria-label="Filtro de mes"><option value="ALL">Todos los meses</option></select>
+      </div>
+    </section>
+
+    <div id="loadingBox" class="loading">Cargando datos online...</div>
+    <div id="statusLine" class="status-line">Actualizando información...</div>
+
+    <section class="kpi-grid" id="kpis">
+      <article class="kpi">
+        <div class="kpi-label">Satisfacción General <span>😊</span></div>
+        <div class="kpi-value" id="satValue">-</div>
+        <div class="kpi-desc" id="satDesc"></div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Recomendación <span>📣</span></div>
+        <div class="kpi-value" id="recValue">-</div>
+        <div class="kpi-desc" id="recDesc"></div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Brand Importance <span>🏆</span></div>
+        <div class="kpi-value" id="biValue">-</div>
+        <div class="kpi-desc">Importancia de estar respaldado por MBFS.</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Brand Retention <span>🔁</span></div>
+        <div class="kpi-value" id="brValue">-</div>
+        <div class="kpi-desc">Probabilidad de volver a usar MBFS.</div>
+      </article>
+      <article class="kpi highlight">
+        <div class="kpi-label"><span>CLI</span><span class="pill-main">KPI PRINCIPAL</span></div>
+        <div class="kpi-value" id="cliValue">-</div>
+        <div class="kpi-desc">CLI = (Satisfacción General + Recomendación + Brand Importance + Brand Retention) / 4.</div>
+      </article>
+    </section>
+
+    <section class="exec-grid" id="recomendaciones">
+      <article class="exec-panel">
+        <h2>Resumen ejecutivo comercial</h2>
+        <p id="execSubtitle">Lectura automática de los KPIs seleccionados.</p>
+        <div class="insight-cards">
+          <div class="insight-card"><strong>Estado del CLI</strong><span id="cliStatus">-</span></div>
+          <div class="insight-card"><strong>Principal fortaleza</strong><span id="strongestDriver">-</span></div>
+          <div class="insight-card"><strong>Mayor oportunidad</strong><span id="weakestDriver">-</span></div>
+        </div>
+        <div class="action-box">
+          <h3>Recomendación comercial sugerida</h3>
+          <p id="mainAction">-</p>
+        </div>
+      </article>
+
+      <article class="exec-panel">
+        <h2>Drivers del CLI</h2>
+        <p>Comparación de los cuatro componentes que explican el CLI.</p>
+        <div class="driver-bars" id="driverBars"></div>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel"><h2>Evolución mensual del CLI</h2><p>Serie mensual según el mes evaluado.</p><div class="chart-wrap"><canvas id="cliTrendChart"></canvas></div></article>
+      <article class="panel"><h2>Comparación de componentes</h2><p>Valores promedio del período seleccionado.</p><div class="chart-wrap"><canvas id="componentsChart"></canvas></div></article>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="panel"><h2>Canal por el cual conoció MBF</h2><p>Distribución porcentual sobre respuestas del período seleccionado.</p><div class="chart-wrap small"><canvas id="channelChart"></canvas></div></article>
+      <article class="panel"><h2>Oferta de financiamiento</h2><p>Distribución porcentual sobre respuestas del período seleccionado.</p><div class="chart-wrap small"><canvas id="offerChart"></canvas></div></article>
+      <article class="panel"><h2>Atributos destacados</h2><p>Porcentaje positivo por atributo.</p><div class="chart-wrap small"><canvas id="attributesChart"></canvas></div></article>
+    </section>
+
+    <section class="panel table-panel">
+      <h2>Detalle mensual</h2>
+      <p>Resumen de respuestas y componentes por mes evaluado.</p>
+      <table>
+        <thead><tr><th>Mes</th><th>Resp.</th><th>Satisfacción</th><th>Recomendación</th><th>Brand Importance</th><th>Brand Retention</th><th>CLI</th></tr></thead>
+        <tbody id="monthlyTable"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const API_DASHBOARD="https://script.google.com/macros/s/AKfycb7f-5snbgNCIRTmkfFvD3-1Efeo90KOeocJ8L1yWfNQh0ZCfircg8qmY5GHeCLvruS/exec";
+    let data={ok:false,generatedAt:null,months:[],years:[],monthly:{},total:{responses:0,satisfaccionGeneral:0,recomendacion:0,brandImportance:0,brandRetention:0,cli:0,channels:[0,0,0,0,0,0,0],offer:[0,0,0],attributes:[0,0,0,0,0]},byYear:{},attrNames:["Calidad de Servicio","Agilidad en la atención","Asesoramiento brindado","Cumplimiento con los compromisos pactados","Tranquilidad, respaldo y solidez económica"]};
+    const MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    const CHANNEL_LABELS=["Referencia","Concesionario","LinkedIn","Mercado","Iniciativa","Otro","Sin dato"];
+    const OFFER_LABELS=["Primera opción","Otras opciones","Sin dato"];
+    const fmt=v=>{const n=Number(v);if(!Number.isFinite(n))return"-";return n.toLocaleString("es-AR",{minimumFractionDigits:1,maximumFractionDigits:1});};
+    const fmtInt=v=>{const n=Number(v);if(!Number.isFinite(n))return"0";return n.toLocaleString("es-AR",{maximumFractionDigits:0});};
+    const pct=v=>`${fmt(v)}%`;
+    function emptyAgg(){return{responses:0,satisfaccionGeneral:0,recomendacion:0,brandImportance:0,brandRetention:0,cli:0,channels:[0,0,0,0,0,0,0],offer:[0,0,0],attributes:[0,0,0,0,0]};}
+    function getSelectedData(){const y=document.getElementById("yearFilter").value;const m=document.getElementById("monthFilter").value;if(y==="ALL"&&m==="ALL")return data.total||emptyAgg();if(y!=="ALL"&&m==="ALL")return data.byYear&&data.byYear[y]?data.byYear[y]:emptyAgg();if(y!=="ALL"&&m!=="ALL"){const k=`${m} ${y}`;return data.monthly&&data.monthly[k]?data.monthly[k]:emptyAgg();}return data.total||emptyAgg();}
+    function toPercentArray(values){const nums=(values||[]).map(v=>Number(v)||0);const total=nums.reduce((a,v)=>a+v,0);if(!total)return nums;return nums.map(v=>Math.round((v/total)*1000)/10);}
+    function componentList(s){return[{key:"satisfaccionGeneral",label:"Satisfacción General",value:Number(s.satisfaccionGeneral)||0},{key:"recomendacion",label:"Recomendación",value:Number(s.recomendacion)||0},{key:"brandImportance",label:"Brand Importance",value:Number(s.brandImportance)||0},{key:"brandRetention",label:"Brand Retention",value:Number(s.brandRetention)||0}];}
+    function badge(label,type){return`<span class="badge ${type}">${label}</span>`;}
+    function setText(id,value){const el=document.getElementById(id);if(el)el.textContent=value;}
+    async function cargarDatosOnline(){const loading=document.getElementById("loadingBox");if(loading)loading.style.display="block";return new Promise(resolve=>{const callbackName="callbackDashboard_"+Date.now();let script;window[callbackName]=function(payload){try{if(payload&&payload.months&&payload.monthly&&payload.total){data=payload;console.log("Dashboard actualizado desde Apps Script JSONP:",data);}else{console.warn("La API respondió, pero no vino con estructura completa:",payload);}}catch(error){console.error("Error procesando payload JSONP:",error);}finally{delete window[callbackName];if(script&&script.parentNode)script.parentNode.removeChild(script);if(loading)loading.style.display="none";resolve();}};script=document.createElement("script");script.src=API_DASHBOARD+"?callback="+callbackName+"&t="+Date.now();script.onerror=function(){console.error("No se pudo cargar Apps Script por JSONP.");delete window[callbackName];if(script&&script.parentNode)script.parentNode.removeChild(script);if(loading)loading.style.display="none";resolve();};document.body.appendChild(script);});}
+    function populateFilters(){const yf=document.getElementById("yearFilter");const mf=document.getElementById("monthFilter");const cy=yf.value;const cm=mf.value;const years=Array.isArray(data.years)&&data.years.length?data.years:Array.from(new Set((data.months||[]).map(m=>Number(String(m).split(" ").pop())))).sort();yf.innerHTML='<option value="ALL">Todos los años</option>';years.forEach(y=>{const opt=document.createElement("option");opt.value=String(y);opt.textContent=String(y);yf.appendChild(opt);});if([...yf.options].some(o=>o.value===cy))yf.value=cy;mf.innerHTML='<option value="ALL">Todos los meses</option>';const sy=yf.value;const available=sy==="ALL"?MONTHS:MONTHS.filter(m=>data.monthly&&data.monthly[`${m} ${sy}`]);available.forEach(m=>{const opt=document.createElement("option");opt.value=m;opt.textContent=m;mf.appendChild(opt);});mf.value=[...mf.options].some(o=>o.value===cm)?cm:"ALL";}
+    let cliTrendChart,componentsChart,channelChart,offerChart,attributesChart;
+    function makeCharts(){const common={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#111827",font:{family:"Aptos, Segoe UI, Arial",size:12,weight:"400"}}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label||ctx.label||""}: ${fmt(typeof ctx.raw==="number"?ctx.raw:ctx.parsed)}`}}},scales:{x:{ticks:{color:"#667085",font:{family:"Aptos, Segoe UI, Arial",size:12}},grid:{display:false}},y:{beginAtZero:true,suggestedMax:100,ticks:{color:"#667085",callback:v=>fmt(v)},grid:{color:"rgba(148,163,184,.24)"}}}};cliTrendChart=new Chart(document.getElementById("cliTrendChart"),{type:"line",data:{labels:[],datasets:[{label:"CLI",data:[],borderColor:"#0097a7",backgroundColor:"rgba(0,151,167,.12)",borderWidth:3,pointRadius:4,pointBackgroundColor:"#0097a7",tension:.35,fill:true}]},options:common});componentsChart=new Chart(document.getElementById("componentsChart"),{type:"bar",data:{labels:["Satisfacción","Recomendación","Importance","Retention"],datasets:[{label:"Valor",data:[],backgroundColor:["#0097a7","#00a7b5","#6366f1","#f59e0b"],borderRadius:12}]},options:common});channelChart=new Chart(document.getElementById("channelChart"),{type:"doughnut",data:{labels:CHANNEL_LABELS,datasets:[{data:[],backgroundColor:["#0097a7","#6366f1","#f59e0b","#16a34a","#dc2626","#64748b","#cbd5e1"],borderWidth:0}]},options:doughnutOptions()});offerChart=new Chart(document.getElementById("offerChart"),{type:"doughnut",data:{labels:OFFER_LABELS,datasets:[{data:[],backgroundColor:["#0097a7","#6366f1","#cbd5e1"],borderWidth:0}]},options:doughnutOptions()});attributesChart=new Chart(document.getElementById("attributesChart"),{type:"bar",data:{labels:data.attrNames||[],datasets:[{label:"Positivo",data:[],backgroundColor:"#0097a7",borderRadius:12}]},options:{...common,indexAxis:"y",plugins:{...common.plugins,legend:{display:false}}}});}
+    function doughnutOptions(){return{responsive:true,maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom",labels:{color:"#111827",font:{family:"Aptos, Segoe UI, Arial",size:12,weight:"400"}}},tooltip:{callbacks:{label:ctx=>`${ctx.label||""}: ${pct(Number(ctx.raw)||0)}`}}}};}
+    function updateKPIs(s){setText("satValue",fmt(s.satisfaccionGeneral));setText("recValue",fmt(s.recomendacion));setText("biValue",fmt(s.brandImportance));setText("brValue",fmt(s.brandRetention));setText("cliValue",fmt(s.cli));setText("satDesc","");setText("recDesc","");}
+    function updateExecutive(s){const comps=componentList(s).sort((a,b)=>b.value-a.value);const strongest=comps[0]||{label:"-",value:0};const weakest=comps[comps.length-1]||{label:"-",value:0};const status=s.cli>=85?{label:"Saludable",badge:"green",text:"El CLI está en zona saludable, con margen para seguir fortaleciendo la experiencia."}:s.cli>=75?{label:"Atención",badge:"orange",text:"El CLI está en zona saludable, pero hay margen de mejora. Conviene atacar el driver más bajo."}:{label:"Crítico",badge:"red",text:"El CLI requiere atención prioritaria. Conviene trabajar sobre el driver de menor desempeño."};document.getElementById("execSubtitle").textContent=`Acumulado seleccionado | ${fmtInt(s.responses)} respuestas`;document.getElementById("cliStatus").innerHTML=`${badge(status.label,status.badge)} ${status.text}`;document.getElementById("strongestDriver").innerHTML=`${badge(strongest.label,"green")} ${fmt(strongest.value)} puntos. Usar este driver como argumento comercial y replicar buenas prácticas.`;document.getElementById("weakestDriver").innerHTML=`${badge(weakest.label,"orange")} ${fmt(weakest.value)} puntos. Es el principal espacio de mejora para elevar el CLI.`;document.getElementById("mainAction").textContent=`Priorizar acciones sobre ${weakest.label.toLowerCase()} y sostener la fortaleza de ${strongest.label.toLowerCase()} para mejorar la percepción general del cliente.`;const bars=document.getElementById("driverBars");bars.innerHTML="";componentList(s).forEach(item=>{const row=document.createElement("div");row.className="driver-row";const label=document.createElement("div");label.textContent=item.label;const track=document.createElement("div");track.className="bar-track";const fill=document.createElement("div");fill.className="bar-fill";fill.style.width=`${Math.max(0,Math.min(100,item.value))}%`;if(item.label===weakest.label)fill.classList.add("lowest");track.appendChild(fill);const value=document.createElement("div");value.className="driver-value";value.textContent=fmt(item.value);row.appendChild(label);row.appendChild(track);row.appendChild(value);bars.appendChild(row);});}
+    function updateCharts(s){const months=data.months||[];cliTrendChart.data.labels=months;cliTrendChart.data.datasets[0].data=months.map(m=>data.monthly[m]?data.monthly[m].cli:null);cliTrendChart.update();componentsChart.data.datasets[0].data=[s.satisfaccionGeneral||0,s.recomendacion||0,s.brandImportance||0,s.brandRetention||0];componentsChart.update();channelChart.data.datasets[0].data=toPercentArray(s.channels||[]);channelChart.update();offerChart.data.datasets[0].data=toPercentArray(s.offer||[]);offerChart.update();attributesChart.data.labels=data.attrNames||[];attributesChart.data.datasets[0].data=s.attributes||[];attributesChart.update();}
+    function updateTable(){const tbody=document.getElementById("monthlyTable");tbody.innerHTML="";(data.months||[]).forEach(month=>{const row=data.monthly[month];if(!row)return;const tr=document.createElement("tr");tr.innerHTML=`<td>${month}</td><td>${fmtInt(row.responses)}</td><td>${fmt(row.satisfaccionGeneral)}</td><td>${fmt(row.recomendacion)}</td><td>${fmt(row.brandImportance)}</td><td>${fmt(row.brandRetention)}</td><td>${fmt(row.cli)}</td>`;tbody.appendChild(tr);});}
+    function updateStatusLine(){const generated=data.generatedAt?new Date(data.generatedAt).toLocaleString("es-AR"):"-";document.getElementById("statusLine").textContent=`Respuestas analizadas: ${fmtInt(data.total&&data.total.responses)} | Última actualización: ${generated}`;}
+    function update(){populateFilters();const selected=getSelectedData();updateKPIs(selected);updateExecutive(selected);updateCharts(selected);updateTable();updateStatusLine();}
+    async function iniciarDashboard(){await cargarDatosOnline();populateFilters();makeCharts();update();document.getElementById("yearFilter").addEventListener("change",()=>{document.getElementById("monthFilter").value="ALL";update();});document.getElementById("monthFilter").addEventListener("change",update);setInterval(async()=>{await cargarDatosOnline();update();},60000);}
+    iniciarDashboard();
+  </script>
+</body>
+</html>
