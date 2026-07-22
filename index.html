@@ -9,6 +9,97 @@
 @media(max-width:1200px){.exec-grid{grid-template-columns:1fr}.insight-cards{grid-template-columns:1fr}.driver-row{grid-template-columns:130px 1fr 48px}}
 
 @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.grid,.grid-3{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr}} @media(max-width:768px){body{flex-direction:column}.sidebar{width:100%;height:auto;position:relative}.main{padding:16px}.kpi-grid{grid-template-columns:1fr}.kpi-cli{transform:none}}
+
+/* FIX SOLO COLOR DE TÍTULOS PEDIDOS */
+.exec-panel h2,
+.panel h2,
+.driver-row span,
+.driver-row strong,
+.funnel-step strong,
+.priority-list li strong,
+.action-box h3,
+.kpi-cli .kpi-label,
+#recomendaciones .insight-card strong,
+#mensual .panel h2,
+#atributos .panel h2,
+#canales .panel h2,
+table th {
+  color: #111827 !important;
+}
+
+/* Drivers del CLI: los 5 drivers */
+#barSatVal,
+#barRecVal,
+#barBiVa*,
+#barBrVal,
+#barCliVal,
+.driver-row span,
+.driver-row strong {
+  color: #111827 !important;
+}
+
+/* Estado del CLI */
+#cliStatus,
+#cliStatus *,
+#re*omendaciones .insight-card strong {
+  color: #111827 !important;
+}
+
+/* Prioridades del equipo comercial */
+#priorityList,
+#priorityList *,
+.priority-list li,
+.priority-list li strong {
+  color: #111827 !important;
+}
+
+/* Embudo de experiencia comercial */
+.funnel,
+.funnel *,
+.funnel-step,
+.funnel-step strong,
+.funnel-step span {
+  color: #111827 !important;
+}
+
+/* Detalle de la vista seleccionada */
+#selectedSubtitle {
+  color: #111827 !important;
+}
+
+/* Tablas / resumen mensual */
+#summaryRows,
+#summaryRows *,
+table,
+table th,
+table td {
+  color: #111827 !important;
+}
+
+/* Mantener KPI principal CLI en blanco */
+.kpi-cli,
+.kpi-cli *,
+.kpi-cli .kpi-label,
+.kpi-cli .kpi-value,
+.kpi-cli .kpi-note {
+  color: #ffffff !important;
+}
+
+/* Mantener badges legibles */
+.badge {
+  color: #ffffff !important;
+}
+
+.badge.warn {
+  color: #111827 !important;
+}
+
+.badge.good,
+.badge.risk {
+  color: #ffffff !important;
+}
+
+</style>
 </style></head><body><aside class="sidebar"><div class="brand"><div class="brand-logo">MB</div><div><strong>MB Financiera</strong><small>Customer Experience</small></div></div><div class="nav-title">Menú</div><nav class="nav"><a class="active" href="#inicio">🏠 Inicio</a><a href="#kpis">📌 KPIs</a><a href="#mensual">📈 Evolución mensual</a><a href="#filtro">🗓️ Filtros</a><a href="#atributos">⭐ Atributos</a><a href="#canales">🔎 Canales</a></nav><div class="sidebar-footer"><strong>Fuente</strong><br>Encuesta de Satisfacción (respuestas).xlsx<br><br>Incluye 2025 y 2026. Mes evaluado = mes de respuesta menos 1. Recomendación usa el cálculo de la captura.</div></aside><main class="main" id="inicio"><section class="hero"><h1>Dashboard de Satisfacción y Lealtad de Clientes</h1><p>Dashboard construido desde la base cruda, con todos los meses disponibles y filtros por año/mes. El CLI resume Satisfacción General, Recomendación, Brand Importance y Brand Retention.</p></section><section class="toolbar" id="filtro"><div><label>Filtros</label><div class="hint">Filtrá por año y mes. Si elegís “Todos los meses”, se muestra el acumulado del año seleccionado.</div></div><select id="yearFilter"><option value="ALL">Todos los años</option>
 <option value="2025">2025</option>
 <option value="2026">2026</option></select><select id="monthFilter"><option value="ALL">Todos los meses</option></select></section>
